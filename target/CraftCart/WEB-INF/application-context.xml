@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:amq="http://activemq.apache.org/schema/core"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+							http://activemq.apache.org/schema/core
+							http://activemq.apache.org/schema/core/activemq-core-5.5.0.xsd
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/jms
+							http://www.springframework.org/schema/jms/spring-jms-3.0.xsd
+                           http://www.springframework.org/schema/context 
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc
+                           http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+
+	<context:component-scan base-package="org.ashit.craftcart"></context:component-scan>
+
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+		<property name="url" value="jdbc:mysql://localhost:3306/craftcart" />
+		<property name="username" value="ashit" />
+		<property name="password" value="test123" />
+	</bean>
+
+	<bean id="loginDao" class="org.ashit.craftcart.Dao.LoginDao">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+
+	<amq:connectionFactory id="connectionFactory"
+		brokerURL="tcp://localhost:8161" />
+
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+		<property  name="connectionFactory" ref="connectionFactory" />
+		<property  name="defaultDestinationName"
+			value="spittle.alert.queue" />
+
+
+		<bean id="viewResolver"
+			class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+			<property name="prefix" value="/pages/">
+			</property>
+			<property name="suffix" value=".jsp">
+			</property>
+		</bean>
+
+</beans>

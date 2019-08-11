@@ -1,0 +1,29 @@
+@CHARSET "ISO-8859-1";
+
+body#bgColor {
+	background: url("../../images/login-page-background-image-112.jpg")
+		no-repeat fixed center;
+	background-size: 100%;
+}
+
+#loginContainer {
+	box-shadow: 8px 7px 10px #888888;
+}
+
+.right_content {
+	float: right;
+}
+
+.footer_bar {
+	position: absolute;
+	width: 100%;
+	background-color: graytext;
+	top: 580px;
+}
+.right_padding20{
+	padding-right: 20px;
+}
+.login-registration-form label {
+    clear: left;
+    font-weight: normal;
+

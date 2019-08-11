@@ -1,0 +1,695 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                       <script>
+
+/* Added by Srilatha */
+//This is for browser back button, checking for credentialsExist, if it is not there then redirect the user to login
+var credExist  = GetFromLocalStorage("credentialsExist",obfuscation);
+if(credExist == null || credExist == "" || credExist != "true"){
+	window.location.href = "/ePubReader/readerlibrary/login.html";
+}
+
+/* function call(){
+	var langSet=GetFromLocalStorage("language",obfuscation);
+	if(langSet==null){
+		SaveInLocalStorage("language",'en',obfuscation);
+		langSet='en';
+	}
+	document.getElementById("library").src="epubimages/"+langSet+"/button_mylibrary.png";
+		document.getElementById("library_loading").src="epubimages/"+langSet+"/button_mylibrary.png";
+	document.getElementById("library_loading_error").src="epubimages/"+langSet+"/button_mylibrary.png";
+	document.getElementById("retry_error_img").src="epubimages/retry.png";
+	
+	document.getElementById("mylibrary_link_loading").href="/ePubReader/readerlibrary/myLibrary.html"; 
+	document.getElementById("mylibrary_link_error_loading").href="/ePubReader/readerlibrary/myLibrary.html"; 
+	document.getElementById("retry_error_loading").href=window.location.href;
+
+} */
+
+	var pagenavmap;
+	var currentPosition = 1;
+	var twoPage = true;
+	var userkey;
+	var userbookkey;
+	var windowLocation = window.location.toString();
+	var baseurl1 = windowLocation.substring(0, windowLocation
+			.indexOf("index.html"));
+	var isIPad=(/(iPad|iPhone|iPod)/g.test( navigator.userAgent) );
+	if(isIPad){
+		load(baseurl1+'js/cordova.js').then(baseurl1+'js/filereader.js').then(baseurl1+'js/filewriter.js');
+	}
+	var action = GetFromLocalStorage("oneclickaction",obfuscation);//getParameterByName("action");
+	console.log("stored action = " + action);
+	var bookId = getParameterByName("bookid");
+	var updateVersion = getParameterByName("updateVersion");
+	var updateType = getParameterByName("updateType");
+	epubFileName = "temp";
+	var bookLoadName=(baseurl1.substring(0,baseurl1.length-1)).substring((baseurl1.substring(0,baseurl1.length-1).lastIndexOf("/"))+1,baseurl1.substring(0,baseurl1.length-1).length);
+	window.applicationCache.addEventListener("cached", downloadStatusEvent, false);
+    function downloadStatusEvent(event) {
+      SaveInLocalStorage(bookLoadName+"#cacheDone",event.type);
+    }
+	var loadStatus=GetFromLocalStorage(bookLoadName);
+	var isConnected = navigator.onLine;
+	if (isConnected && loadStatus!="false" && loadStatus!=false) {
+		load(baseurl1 + 'js/jquery-1.9.1.min.js')
+				.thenRun(
+						function() {
+							console.log('Jquery Loaded...');
+							var json;
+							$
+									.post(
+											baseurl1 + "read",
+											{
+												readJsonData : 'getJSONData',
+												sourceInfo : 'indexhtml'
+											},
+											function(data, status) {
+												if (data == 'sessionExpired') {
+													window.open('../readerlibrary/myLibrary.html', '_self');
+												} else {
+												var spinedata;
+												if (data.indexOf("-ukey-") != -1
+														&& data
+																.indexOf("-ubkey-") != -1) {
+													var ukeyindex = data
+															.lastIndexOf("-ukey-");
+													var ubkeyindex = data
+															.lastIndexOf("-ubkey-");
+													
+													/* Prashanth N for Book Information */
+													/* var epubsizeindex = data.lastIndexOf("-epubsize-");	
+													var epubsize = data.substr(epubsizeindex+10, length);					
+													var dataTemp = data.substr(0, epubsizeindex);							
+													data = dataTemp; */													
+													/* end */
+													
+													var length = data.length;
+													var userkeysub = data
+															.substr(
+																	ukeyindex + 6,
+																	length);
+													userkey = userkeysub
+															.substr(
+																	0,
+																	userkeysub
+																			.indexOf('-ubkey-'));
+												//	console.log(userkey);
+
+													userbookkey = data.substr(
+															ubkeyindex + 7,
+															length);
+													//console.log(userbookkey);
+
+													spinedata = data
+															.substring(
+																	0,
+																	data
+																			.lastIndexOf("-ukey-"));
+													//console.log(spinedata);
+
+												} else {
+													spinedata = data;
+												}
+												//console.log(spinedata);
+												json = decodeEpubReader(spinedata);
+												epubFileName = jQuery
+														.parseJSON(json).fileDetails['epubfilename'];
+												SaveInLocalStorage(epubFileName
+														+ "#" + 'userkey',
+														userkey);
+												SaveInLocalStorage(epubFileName
+														+ "#" + 'userbookkey',
+														userbookkey);
+												
+												/* Prashanth N for Book Information */								
+												//SaveInLocalStorage(epubFileName+"#"+'size',epubsize);
+												/* end */
+												
+												console.log('JSON File Name:'
+														+ epubFileName);
+												//console.log('JSON File Name:' + json.fileDetails['epubfilename']);
+												try {
+													//saving base64 encoded values into local storage #PN
+													loadDatabase().done(function (){
+			GetFromDataStorage(epubFileName+"#downloaded").done(function(downloadStatus){
+			if(downloadStatus!="true"){
+																		SaveInDataStorage(epubFileName+ '#'+ 'json',json,1).done(	function() {
+																			loadAlljsFiles();
+																			console.log('Supported files loaded...');
+																							/* load(
+																									baseurl1
+																											+ 'js/jquery.contextMenu.js')
+																									.then(
+																											baseurl1
+																													+ 'js/jquery.highlight-4.js')
+																									.then(
+																											baseurl1
+																													+ 'js/jquery.xpath.js')
+																									.then(
+																											baseurl1
+																													+ 'js/decrypt.js')
+																									.then(
+																											baseurl1
+																													+ 'js/jquery-ui-1.10.2.custom.min.js')
+																									.then(
+																											baseurl1
+																													+ 'js/search.js')
+																									.then(baseurl1+'js/settings.js')
+																									.then(
+																											baseurl1
+																													+ 'js/jquery.mobile-events.min.js')
+																									.then(
+																											baseurl1
+																													+ 'js/jquery.dotdotdot.js')
+																									.then(
+																											baseurl1
+																													+ 'js/annotations.js')
+																									.then(
+																											baseurl1
+																													+ 'js/pagination.js')
+																									.then(
+																											baseurl1
+																													+ 'js/toolbar.js') */
+																													/* loadAlljsFiles();
+																													console.log('Supported files loaded...');
+
+																									.then(
+																											baseurl1
+																													+ 'js/noteIconPosition.js')
+
+																									.then(
+																											baseurl1
+																													+ 'js/jquery.treeview.js')
+																									.thenRun(
+																											function() {
+																												load(
+																														baseurl1
+																																+ 'js/recentHistory.js')
+																														.then(
+																																baseurl1
+																																		+ 'js/getlatest.js')
+																														.then(
+																																baseurl1
+																																		+ 'js/loadLocalStorageToBook.js')
+																														.thenRun(
+																																function() {
+																																	load(
+																																			baseurl1
+																																					+ 'js/loadResourcesFromJSON.js')
+																																			.thenRun(
+																																					function() {
+																																						//	load(baseurl1+'js/pagination.js').thenRun(function (){
+																																							
+																																						
+		
+																																						updateBookForOfflineAccess();//offline access status
+																																						//displayAction(action);
+																																						console
+																																								.log('Supported files loaded...');
+																																					});
+																																	//		});
+																																	//});
+																																});
+
+																											});
+																						}); */
+																	});
+			}
+			else{
+				loadAlljsFiles();
+				
+			}
+			});
+			});
+												} catch (e) {
+													//console.log('catch error:' + e.name + ' e :' + e);
+													if (e.name === 'QuotaExceededError') {
+														//console.log('inside QuotaExceededError');
+														for ( var i = 0; i < localStorage.length; i++) {
+															if (localStorage
+																	.key(i)
+																	.indexOf(
+																			epubFileName) == -1
+																	&& localStorage
+																			.key(
+																					i)
+																			.indexOf(
+																					'#json') == -1) {
+																localStorage
+																		.removeItem(localStorage
+																				.key(i));
+															}
+														}
+
+														//saving base64 encoded values into local storage #PN
+														//saving base64 encoded values into local storage #PN
+														loadDatabase().done(function (){
+				 GetFromDataStorage(epubFileName+"#downloaded").done(function(downloadStatus){
+					if(downloadStatus!="true"){
+																			SaveInDataStorage(
+																					epubFileName
+																							+ '#'
+																							+ 'json',
+																					json,
+																					1)
+																					.done(
+																							function() {
+																								/* load(
+																										baseurl1
+																												+ 'js/jquery.contextMenu.js')
+																										.then(
+																												baseurl1
+																														+ 'js/jquery.highlight-4.js')
+																										.then(
+																												baseurl1
+																														+ 'js/jquery.xpath.js')
+																										.then(
+																												baseurl1
+																														+ 'js/decrypt.js')
+																										.then(
+																												baseurl1
+																														+ 'js/jquery-ui-1.10.2.custom.min.js')
+																										.then(
+																												baseurl1
+																														+ 'js/search.js')
+																										.then(baseurl1+'js/settings.js')
+																										.then(
+																												baseurl1
+																														+ 'js/jquery.mobile-events.min.js')
+																										.then(
+																												baseurl1
+																														+ 'js/annotations.js')
+																										.then(
+																												baseurl1
+																														+ 'js/pagination.js')
+																										.then(
+																												baseurl1
+																														+ 'js/toolbar.js')
+
+																										.then(
+																												baseurl1
+																														+ 'js/noteIconPosition.js')
+
+																										.then(
+																												baseurl1
+																														+ 'js/jquery.treeview.js')
+																										.thenRun(
+																												function() {
+																													load(
+																															baseurl1
+																																	+ 'js/recentHistory.js')
+																															.then(
+																																	baseurl1
+																																			+ 'js/getlatest.js')
+																															.then(
+																																	baseurl1
+																																			+ 'js/loadLocalStorageToBook.js')
+																															.thenRun(
+																																	function() {
+																																		load(
+																																				baseurl1
+																																						+ 'js/loadResourcesFromJSON.js')
+																																				.thenRun(
+																																						function() {
+																																							//	load(baseurl1+'js/pagination.js').thenRun(function (){
+
+																																							updateBookForOfflineAccess();//offline access status
+																																							//displayAction(action);
+																																							console
+																																									.log('Supported files loaded...');
+																																						});
+																																		//		});
+																																		//});
+																																	});
+
+																												}); */
+																								loadAlljsFiles();
+
+																							});
+
+					}
+					else{
+						loadAlljsFiles();
+						}
+				 });
+				 });
+				}
+												//localStorage.setItem('spineJSON', JSON.stringify(spineDetail));
+	}
+											}})
+									.fail(
+											function() {
+												//alert("error");
+												if (localStorage
+														.getItem(epubFileName
+																+ '#' + 'json') != null)
+													//storing base64 encoded value in local storage	#PN
+													json = GetFromDataStorage(
+															epubFileName + '#'
+																	+ 'json', 1)
+															.done(
+																	function() {
+
+																		/* load(
+																				baseurl1
+																						+ 'js/jquery.contextMenu.js')
+																				.then(
+																						baseurl1
+																								+ 'js/jquery.highlight-4.js')
+																				.then(
+																						baseurl1
+																								+ 'js/jquery.xpath.js')
+																				.then(
+																						baseurl1
+																								+ 'js/decrypt.js')
+																				.then(
+																						baseurl1
+																								+ 'js/jquery-ui-1.10.2.custom.min.js')
+																				.then(
+																						baseurl1
+																								+ 'js/search.js')
+																				.then(baseurl1+'js/settings.js')
+																				.then(
+																						baseurl1
+																								+ 'js/annotations.js')
+																				.then(
+																						baseurl1
+																								+ 'js/pagination.js')
+																				.then(
+																						baseurl1
+																								+ 'js/toolbar.js')
+																				.then(
+																						baseurl1
+																								+ 'js/noteIconPosition.js')
+
+																				.then(
+																						baseurl1
+																								+ 'js/jquery.treeview.js')
+																				/* .then(baseurl1+'js/jquery.scrollTo-1.4.2-min.js')
+																				.then(baseurl1+'js/jquery.localscroll-1.2.7-min.js') */
+																				/* .thenRun(
+																						function() {
+																							load(
+																									baseurl1
+																											+ 'js/recentHistory.js')
+																									.then(
+																											baseurl1
+																													+ 'js/getlatest.js')
+																									.then(
+																											baseurl1
+																													+ 'js/loadLocalStorageToBook.js')
+																									.thenRun(
+																											function() {
+																												load(
+																														baseurl1
+																																+ 'js/loadResourcesFromJSON.js')
+																														.thenRun(
+																																function() {
+																																	//	load(baseurl1+'js/pagination.js').thenRun(function (){
+
+																																	updateBookForOfflineAccess();//offline access status
+																																	//displayAction(action);
+																																	console
+																																			.log('Supported files loaded...');
+																																});
+																												//		});
+																											});
+																						}); */
+																 		loadAlljsFiles();
+
+
+																	});
+
+											});
+
+						});
+	} else if(loadStatus!=false && loadStatus!="false"){
+
+		var navValue=GetFromLocalStorage("historyNav");
+		
+		
+		if(navValue){
+			
+			if(window.history.replaceState){
+
+				//window.history.replaceState({}, "", "index.html?"+navValue);
+			window.history.replaceState({}, "", window.location.href+navValue);
+				
+				}
+		
+			
+			}
+		localStorage.removeItem("historyNav");
+		var url = windowLocation.substring(windowLocation
+				.indexOf("/ePubReader/") + 12, windowLocation.length);
+		var bookNameOfLink = url.substring(0, url.indexOf("/"));
+		epubFileName = bookNameOfLink;
+
+		try {
+			//saving base64 encoded values into local storage #PN
+			loadDatabase()
+					.done(
+							function() {
+								/* //SaveInDataStorage(epubFileName+'#'+'json', json,1).done(function (){
+								load(baseurl1 + 'js/jquery.contextMenu.js')
+										.then(
+												baseurl1
+														+ 'js/jquery.highlight-4.js')
+										.then(baseurl1 + 'js/jquery.xpath.js')
+										.then(baseurl1 + 'js/decrypt.js')
+										.then(
+												baseurl1
+														+ 'js/jquery-ui-1.10.2.custom.min.js')
+										.then(baseurl1 + 'js/search.js')
+										.then(baseurl1+'js/settings.js')
+										.then(
+												baseurl1
+														+ 'js/jquery.mobile-events.min.js')
+										.then(baseurl1 + 'js/annotations.js')
+										.then(baseurl1 + 'js/pagination.js')
+										.then(baseurl1 + 'js/toolbar.js')
+
+										.then(
+												baseurl1
+														+ 'js/noteIconPosition.js')
+
+										.then(
+												baseurl1
+														+ 'js/jquery.treeview.js')
+										.thenRun(
+												function() {
+													load(
+															baseurl1
+																	+ 'js/recentHistory.js')
+															.then(
+																	baseurl1
+																			+ 'js/getlatest.js')
+															.then(
+																	baseurl1
+																			+ 'js/loadLocalStorageToBook.js')
+															.thenRun(
+																	function() {
+																		load(
+																				baseurl1
+																						+ 'js/loadResourcesFromJSON.js')
+																				.thenRun(
+																						function() {
+																							//	load(baseurl1+'js/pagination.js').thenRun(function (){
+
+																							updateBookForOfflineAccess();//offline access status
+																							//displayAction(action);
+																							console
+																									.log('Supported files loaded...');
+																						});
+																		//		});
+																		//});
+																	});
+
+												});
+							});
+			//	}); */GetFromDataStorage(epubFileName+"#downloaded").done(function(downloadStatus){
+				if(downloadStatus!="true"){
+					alert('Book not downloaded! \nConnect to the internet and download!');
+					}else{
+						//loadDatabase().done(function (){
+							//SaveInDataStorage(epubFileName+'#'+'json', json,1).done(function (){
+										loadAlljsFiles();
+							// });
+				//	});
+					}
+					});
+					 });
+		} catch (e) {
+			//console.log('catch error:' + e.name + ' e :' + e);
+			if (e.name === 'QuotaExceededError') {
+				//console.log('inside QuotaExceededError');
+				for ( var i = 0; i < localStorage.length; i++) {
+					if (localStorage.key(i).indexOf(epubFileName) == -1
+							&& localStorage.key(i).indexOf('#json') == -1) {
+						localStorage.removeItem(localStorage.key(i));
+					}
+				}
+
+				//saving base64 encoded values into local storage #PN
+				//saving base64 encoded values into local storage #PN
+				loadDatabase()
+						.done(
+								function() {
+									/* //SaveInDataStorage(epubFileName+'#'+'json', json,1).done(function (){
+									load(baseurl1 + 'js/jquery.contextMenu.js')
+											.then(
+													baseurl1
+															+ 'js/jquery.highlight-4.js')
+											.then(
+													baseurl1
+															+ 'js/jquery.xpath.js')
+											.then(baseurl1 + 'js/decrypt.js')
+											.then(
+													baseurl1
+															+ 'js/jquery-ui-1.10.2.custom.min.js')
+											.then(baseurl1 + 'js/search.js')
+											.then(baseurl1+'js/settings.js')
+											.then(
+													baseurl1
+															+ 'js/jquery.mobile-events.min.js')
+											.then(
+													baseurl1
+															+ 'js/annotations.js')
+											.then(baseurl1 + 'js/pagination.js')
+											.then(baseurl1 + 'js/toolbar.js')
+
+											.then(
+													baseurl1
+															+ 'js/noteIconPosition.js')
+
+											.then(
+													baseurl1
+															+ 'js/jquery.treeview.js')
+											.thenRun(
+													function() {
+														load(
+																baseurl1
+																		+ 'js/recentHistory.js')
+																.then(
+																		baseurl1
+																				+ 'js/getlatest.js')
+																.then(
+																		baseurl1
+																				+ 'js/loadLocalStorageToBook.js')
+																.thenRun(
+																		function() {
+																			load(
+																					baseurl1
+																							+ 'js/loadResourcesFromJSON.js')
+																					.thenRun(
+																							function() {
+
+																								updateBookForOfflineAccess();//offline access status
+																								//displayAction(action);
+																								console
+																										.log('Supported files loaded...');
+																							});
+																		});
+
+													}); */loadAlljsFiles();
+								});
+				//});
+			}
+		}
+	} else{
+		delete window.localStorage[bookLoadName];
+	}
+	
+	/* function displayAction(action) {
+		console.log("index.jsp displayAction()===============================action = " + action);
+		if(action == "toc") {
+			showTOCPane();
+			//$("#tocButton").trigger("click");
+		} else if (action == "index") {
+			
+		} else if (action == "annotation") {
+			
+		} else if (action == "history") {
+			
+		}
+	} */
+	function loadAlljsFiles(){
+		console.log("action stored = " + action);
+		load(baseurl1+'js/jquery.contextMenu.js').then(baseurl1+'js/jquery.dateFormat.js').then(baseurl1+'js/jquery.highlight-4.js')
+		.then(baseurl1+'js/jquery.xpath.js')
+		.then(baseurl1+'js/decrypt.js')
+		.then(baseurl1+'js/jquery-ui-1.10.2.custom.min.js')
+		.then(baseurl1+'js/jquery.dotdotdot.js')
+		.then(baseurl1+'js/search.js')
+		.then(baseurl1+'js/offlinesearch.js')
+		.then(baseurl1+'js/settings.js')
+		.then(baseurl1+'js/jquery.mobile-events.min.js')
+		.then(baseurl1+'js/annotations.js')
+		.then(baseurl1+'js/pagination.js')
+		.then(baseurl1+'js/toolbar.js')
+		
+		.then(baseurl1+'js/noteIconPosition.js')
+		
+		.then(baseurl1+'js/jquery.treeview.js')
+			.then(baseurl1+'js/jquery.ui.touch-punch.min.js')
+		.thenRun(function(){
+			load(baseurl1+'js/recentHistory.js').then(baseurl1+'js/getlatest.js').then
+			load(baseurl1+'js/loadLocalStorageToBook.js').thenRun(function(){
+				load(baseurl1+'js/loadResourcesFromJSON.js').thenRun(function (){
+			//	load(baseurl1+'js/pagination.js').thenRun(function (){
+				
+					
+								updateBookForOfflineAccess();//offline access status
+								console.log('Supported files loaded...');
+							});
+			//		});
+					//});
+		});
+			
+	   
+	//});	
+	 });
+	}
+	
+	
+	function getParameterByName(name) {
+	    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+	    var result = regex.exec(windowLocation);
+	    console.log("getParameterByName result = " + result);     
+	    return result == null ? "" : decodeURIComponent(result[1].replace(/\+/g, " "));
+	}
+	
+</script>
